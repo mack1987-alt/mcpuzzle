@@ -126,20 +126,22 @@ class Game:
             "Present Day", "Distant Future"
         ]
         self.current_theme = themes[self.current_level - 1]
-        
-    # def set_level_theme(self):
-        # themes = {
-            # "Ancient Egypt": "egypt",
-            # "Roman Empire": "roman",
-            # "Medieval Europe": "medieval",
-            # "Present Day": "present",
-            # "Distant Future": "future"
-        # }
-        # theme_name = themes[self.current_theme]
-        # tile_images = load_tile_images(NUM_TILE_IMAGES, TILE_SIZE, theme_name)
-        # self.tile_images = tile_images
-        # self.tiles = self.create_tiles()
-            
+
+"""        
+    def set_level_theme(self):
+        themes = {
+            "Ancient Egypt": "egypt",
+            "Roman Empire": "roman",
+            "Medieval Europe": "medieval",
+            "Present Day": "present",
+            "Distant Future": "future"
+        }
+        theme_name = themes[self.current_theme]
+        tile_images = load_tile_images(NUM_TILE_IMAGES, TILE_SIZE, theme_name)
+        self.tile_images = tile_images
+        self.tiles = self.create_tiles()
+"""
+           
     def set_time_power(self):
         # Unlock new time power every 3 levels
         # these are junk powers
