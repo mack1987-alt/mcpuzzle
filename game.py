@@ -1,81 +1,160 @@
 import pygame
 import sys
+import random
 
-# Initialize Pygame
-pygame.init()
-
-# Set up some constants
+# Constants
 WIDTH, HEIGHT = 800, 600
 PLAYER_SIZE = 50
 PLAYER_SPEED = 5
 SCROLL_SPEED = 2
 LEVEL_WIDTH = WIDTH * 2  # Each level is twice the screen width
+TILE_SIZE = 100  # Size of each tile
+NUM_TILE_IMAGES = 5  # Number of different tile images
 
-# Set up the display
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+class Game:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.Font(None, 36)
+        self.current_level = 1
+        self.background_x = 0
+        self.player = Player(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
+        self.tile_images = self.load_tile_images()
+        self.tiles = self.create_tiles()
+        self.place_key()
 
-# Set up the player
-player = pygame.Rect(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
+    def load_tile_images(self):
+        tile_images = []
+        for i in range(NUM_TILE_IMAGES):
+            image = pygame.image.load(f'/home/mcuser/game-test/tile_image{i}.png')
+            image = pygame.transform.scale(image, (TILE_SIZE, TILE_SIZE))
+            tile_images.append(image)
+        return tile_images
 
-# Set up the background
-background = pygame.Surface((LEVEL_WIDTH, HEIGHT))
-background.fill((0, 0, 0))  # Fill the background with black
-background_x = 0
+    def create_tiles(self):
+        tiles = []
+        for x in range(0, LEVEL_WIDTH, TILE_SIZE):
+            for y in range(0, HEIGHT, TILE_SIZE):
+                image = random.choice(self.tile_images)
+                tiles.append(Tile(x, y, TILE_SIZE, TILE_SIZE, image))
+        return tiles
 
-# Set up the current level
-current_level = 1
+    def place_key(self):
+        visible_tiles = [tile for tile in self.tiles if tile.rect.x < WIDTH]
+        key_tile = random.choice(visible_tiles)
+        key_tile.has_key = True
 
-# Game loop
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
+    def run(self):
+        # Main game loop
+        while True:
+            self.handle_events()  # Handle user input
+            self.update()         # Update game state
+            self.draw()           # Draw everything on the screen
+            self.clock.tick(60)   # Cap the frame rate to 60 FPS
 
-    # Get a list of all keys currently being pressed down
-    keys = pygame.key.get_pressed()
+    def handle_events(self):
+        # Handle events such as quitting the game
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                self.check_tile_click(event.pos)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    self.check_tile_interaction()
 
-    # Move the player
-    if keys[pygame.K_LEFT]:
-        player.x -= PLAYER_SPEED
-    if keys[pygame.K_RIGHT]:
-        player.x += PLAYER_SPEED
+    def check_tile_click(self, pos):
+        for tile in self.tiles:
+            if tile.rect.collidepoint(pos):
+                self.interact_with_tile(tile)
 
-    # Ensure the player doesn't move off the screen
-    if player.x < 0:
-        # Check if the player has reached the left edge of the screen
-        if current_level > 1:
-            current_level -= 1
-            background_x = -LEVEL_WIDTH + WIDTH
-            player.x = WIDTH - PLAYER_SIZE  # Reset the player's position to the right edge
-    elif player.x > WIDTH - PLAYER_SIZE:
-        # Check if the player has reached the right edge of the screen
-        current_level += 1
-        background_x = 0
-        player.x = 0  # Reset the player's position to the left edge
+    def check_tile_interaction(self):
+        for tile in self.tiles:
+            if tile.rect.colliderect(self.player.rect):
+                self.interact_with_tile(tile)
 
-    # Scroll the background
-    background_x -= SCROLL_SPEED
-    if background_x < -LEVEL_WIDTH:
-        background_x = 0
+    def interact_with_tile(self, tile):
+        if tile.has_key:
+            tile.reveal()
+            self.advance_level()
+        else:
+            tile.reveal()
 
-    # Adjust the background scroll position to keep the player visible
-    if background_x > 0:
-        background_x = 0
-    elif background_x < -LEVEL_WIDTH + WIDTH:
-        background_x = -LEVEL_WIDTH + WIDTH
+    def advance_level(self):
+        self.current_level += 1
+        self.background_x = 0
+        self.player.rect.x = 0
+        self.tiles = self.create_tiles()
+        self.place_key()
 
-    # Draw everything
-    screen.blit(background, (background_x, 0))
-    pygame.draw.rect(screen, (255, 255, 255), player)
+    def update(self):
+        # Update game state
+        keys = pygame.key.get_pressed()
+        self.player.move(keys)  # Move the player based on key input
+        self.scroll_background()  # Scroll the background
 
-    # Display the current level
-    font = pygame.font.Font(None, 36)
-    text = font.render(f"Level: {current_level}", True, (255, 255, 255))
-    screen.blit(text, (10, 10))
+    def scroll_background(self):
+        # Scroll the background to create a sense of movement
+        self.background_x -= SCROLL_SPEED
+        if self.background_x < -LEVEL_WIDTH:
+            self.background_x = 0
+        if self.background_x > 0:
+            self.background_x = 0
+        elif self.background_x < -LEVEL_WIDTH + WIDTH:
+            self.background_x = -LEVEL_WIDTH + WIDTH
 
-    # Update the display
-    pygame.display.flip()
+    def draw(self):
+        # Draw everything on the screen
+        self.screen.fill((0, 0, 0))
+        for tile in self.tiles:
+            tile.draw(self.screen)
+        self.player.draw(self.screen)
+        text = self.font.render(f"Level: {self.current_level}", True, (255, 255, 255))
+        self.screen.blit(text, (10, 10))
+        pygame.display.flip()
 
-    # Cap the frame rate
-    pygame.time.delay(1000 // 60)
+class Player:
+    def __init__(self, x, y, width, height):
+        self.rect = pygame.Rect(x, y, width, height)
+
+    def move(self, keys):
+        # Move the player based on key input
+        if keys[pygame.K_LEFT]:
+            self.rect.x -= PLAYER_SPEED
+        if keys[pygame.K_RIGHT]:
+            self.rect.x += PLAYER_SPEED
+        if keys[pygame.K_UP]:
+            self.rect.y -= PLAYER_SPEED
+        if keys[pygame.K_DOWN]:
+            self.rect.y += PLAYER_SPEED
+
+        # Ensure the player doesn't move off the screen
+        self.rect.x = max(0, min(self.rect.x, WIDTH - self.rect.width))
+        self.rect.y = max(0, min(self.rect.y, HEIGHT - self.rect.height))
+
+    def draw(self, screen):
+        # Draw the player on the screen
+        pygame.draw.rect(screen, (255, 255, 255), self.rect)
+
+class Tile:
+    def __init__(self, x, y, width, height, image):
+        self.rect = pygame.Rect(x, y, width, height)
+        self.revealed = False
+        self.has_key = False
+        self.image = image
+
+    def reveal(self):
+        self.revealed = True
+
+    def draw(self, screen):
+        if self.revealed:
+            color = (255, 255, 255) if self.has_key else (100, 100, 100)
+            pygame.draw.rect(screen, color, self.rect)
+        else:
+            screen.blit(self.image, self.rect.topleft)
+
+if __name__ == "__main__":
+    game = Game()
+    game.run()
