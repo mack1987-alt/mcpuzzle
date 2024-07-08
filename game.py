@@ -47,11 +47,24 @@ class Game:
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 36)
         self.current_level = 1
+        self.max_levels = 10
         self.background_x = 0
         self.player = Player(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
         self.tile_images = load_tile_images(NUM_TILE_IMAGES, TILE_SIZE)
         self.tiles = self.create_tiles()
-        self.place_key()
+        self.artifacts = []
+        self.lore_items = []
+        self.time_power = None
+        self.boss_present = False
+        self.initialize_level()
+
+    def initialize_level(self):
+        self.tiles = self.create_tiles()
+        self.place_artifact()
+        self.place_lore_items()
+        self.set_level_theme()
+        self.set_time_power()
+        self.check_boss_appearance()
 
     def create_tiles(self):
         # Create an empty list to store the tiles
@@ -70,125 +83,146 @@ class Game:
         # Return the list of tiles
         return tiles
 
-    def place_key(self):
-        # Get a list of tiles that are currently visible on the screen
+    def place_artifact(self):
         visible_tiles = [tile for tile in self.tiles if tile.rect.x < WIDTH]
+        artifact_tile = random.choice(visible_tiles)
+        artifact_tile.has_artifact = True
+        self.artifacts.append(f"Artifact from Level {self.current_level}")
 
-        # Choose a random visible tile to place the key on
-        key_tile = random.choice(visible_tiles)
+    def place_lore_items(self):
+        # Place 1-3 lore items randomly on the level
+        num_lore_items = random.randint(1, 3)
+        visible_tiles = [tile for tile in self.tiles if tile.rect.x < WIDTH and not tile.has_artifact]
+        for _ in range(num_lore_items):
+            if visible_tiles:
+                lore_tile = random.choice(visible_tiles)
+                lore_tile.has_lore = True
+                visible_tiles.remove(lore_tile)
 
-        # Set the has_key attribute of the chosen tile to True
-        key_tile.has_key = True
+    def set_level_theme(self):
+        # Set visual theme based on the current level/time period
+        themes = [
+            "Ancient Egypt", "Roman Empire", "Medieval Europe", "Renaissance", "Industrial Revolution",
+            "World War II", "1960s", "Present Day", "Near Future", "Distant Future"
+        ]
+        self.current_theme = themes[self.current_level - 1]
+        # Here you would load appropriate background and tile images for the theme
+
+    def set_time_power(self):
+        # Unlock new time power every 3 levels
+        powers = [None, "Slow Time", "Rewind", "Time Stop"]
+        self.time_power = powers[self.current_level // 3]
+
+    def check_boss_appearance(self):
+        # Boss appears on levels 5 and 10
+        self.boss_present = self.current_level in [5, 10]
 
     def run(self):
-        # Main game loop
-        while True:
-            self.handle_events()  # Handle user input
-            self.update()         # Update game state
-            self.draw()           # Draw everything on the screen
-            self.clock.tick(60)   # Cap the frame rate to 60 FPS
+        while self.current_level <= self.max_levels:
+            self.handle_events()
+            self.update()
+            self.draw()
+            self.clock.tick(60)
+        self.show_ending()
 
     def handle_events(self):
-        # Handle events such as quitting the game
         for event in pygame.event.get():
-            # Check if the user has requested to quit the game
             if event.type == pygame.QUIT:
-                pygame.quit()  # Uninitialize all pygame modules
-                sys.exit()     # Exit the program
-
-            # Check if the user has clicked the mouse button
+                pygame.quit()
+                sys.exit()
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                self.check_tile_click(event.pos)  # Check if a tile was clicked
-
-            # Check if a key has been pressed down
+                self.check_tile_click(event.pos)
             elif event.type == pygame.KEYDOWN:
-                # Check if the Enter key was pressed
                 if event.key == pygame.K_RETURN:
-                    self.check_tile_interaction()  # Check if the player is interacting with a tile
+                    self.check_tile_interaction()
+                elif event.key == pygame.K_SPACE:
+                    self.use_time_power()
 
     def check_tile_click(self, pos):
-        # Loop through the list of tiles
         for tile in self.tiles:
-            # Check if the mouse click position is within the tile's rectangle
             if tile.rect.collidepoint(pos):
-                # Call the interact_with_tile method with the clicked tile
                 self.interact_with_tile(tile)
 
     def check_tile_interaction(self):
-        # Loop through the list of tiles
         for tile in self.tiles:
-            # Check if the player's rectangle intersects with the tile's rectangle
             if tile.rect.colliderect(self.player.rect):
-                # Call the interact_with_tile method with the interacted tile
                 self.interact_with_tile(tile)
 
     def interact_with_tile(self, tile):
-        # If the tile has a key
-        if tile.has_key:
-            # Reveal the tile
-            tile.reveal()
-            # Advance to the next level
-            self.advance_level()
-        # If the tile doesn't have a key
-        else:
-            # Reveal the tile
-            tile.reveal()
+        if tile.has_artifact:
+            self.collect_artifact(tile)
+        elif tile.has_lore:
+            self.collect_lore(tile)
+        tile.reveal()
+
+    def collect_artifact(self, tile):
+        print(f"Collected artifact from {self.current_theme}")
+        self.artifacts.append(f"Artifact from {self.current_theme}")
+        tile.has_artifact = False
+        self.advance_level()
+
+    def collect_lore(self, tile):
+        print(f"Collected lore item from {self.current_theme}")
+        self.lore_items.append(f"Lore from {self.current_theme}")
+        tile.has_lore = False
+
+    def use_time_power(self):
+        if self.time_power:
+            print(f"Using time power: {self.time_power}")
+            # Implement time power effect
 
     def advance_level(self):
-        # Increment the current level
-        self.current_level += 1
-
-        # Reset the background position
-        self.background_x = 0
-
-        # Reset the player position
-        self.player.rect.x = 0
-
-        # Create a new set of tiles
-        self.tiles = self.create_tiles()
-
-        # Place a new key
-        self.place_key()
-
-    def update(self):
-        # Update game state
-        keys = pygame.key.get_pressed()
-        self.player.move(keys)  # Move the player based on key input
-        self.scroll_background()  # Scroll the background
+        if self.current_level < self.max_levels:
+            self.current_level += 1
+            self.initialize_level()
+        else:
+            self.show_ending()
 
     def scroll_background(self):
         # Scroll the background to create a sense of movement
-        self.background_x -= SCROLL_SPEED  # Move the background to the left
-
-        # If the background has moved off the screen to the left,
-        # reset its position to the right edge of the screen
+        self.background_x -= SCROLL_SPEED
         if self.background_x < -LEVEL_WIDTH:
-            self.background_x = 0  # Reset to the right edge of the screen
-
-        # If the background has moved off the screen to the right,
-        # reset its position to the left edge of the screen
+            self.background_x = 0
         if self.background_x > 0:
-            self.background_x = 0  # Reset to the left edge of the screen
-
-        # If the background is partially off the screen to the left,
-        # move it to the right edge of the screen
+            self.background_x = 0
         elif self.background_x < -LEVEL_WIDTH + WIDTH:
-            self.background_x = -LEVEL_WIDTH + WIDTH  # Move to the right edge of the screen
+            self.background_x = -LEVEL_WIDTH + WIDTH
+            
+    def update(self):
+        keys = pygame.key.get_pressed()
+        self.player.move(keys)
+        self.scroll_background()
+        if self.boss_present:
+            self.update_boss()
+
+    def update_boss(self):
+        # Implement boss movement and attacks
+        pass
 
     def draw(self):
-        # Fill the screen with a black background
         self.screen.fill((0, 0, 0))
-
-        # Draw each tile
         for tile in self.tiles:
             tile.draw(self.screen)
-
-        # Draw the player
         self.player.draw(self.screen)
-
-        # Draw the level number text
-        text = self.font.render(f"Level: {self.current_level}", True, (255, 255, 255))
-        self.screen.blit(text, (10, 10))
-
-        # Update the display
+        if self.boss_present:
+            self.draw_boss()
+        self.draw_ui()
         pygame.display.flip()
+
+    def draw_boss(self):
+        # Draw the boss character
+        pass
+
+    def draw_ui(self):
+        text = self.font.render(f"Level: {self.current_level} - {self.current_theme}", True, (255, 255, 255))
+        self.screen.blit(text, (10, 10))
+        if self.time_power:
+            power_text = self.font.render(f"Power: {self.time_power}", True, (255, 255, 255))
+            self.screen.blit(power_text, (10, 50))
+
+    def show_ending(self):
+        print("Game Over - You've completed the Temporal Labyrinth!")
+        print(f"Collected Artifacts: {len(self.artifacts)}")
+        print(f"Lore Items Found: {len(self.lore_items)}")
+        pygame.quit()
+        sys.exit()
