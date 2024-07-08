@@ -122,14 +122,30 @@ class Game:
     def set_level_theme(self):
         # Set visual theme based on the current level/time period
         themes = [
-            "Ancient Egypt", "Roman Empire", "Medieval Europe", "Renaissance", "Industrial Revolution",
-            "World War II", "1960s", "Present Day", "Near Future", "Distant Future"
+            "Ancient Egypt", "Roman Empire", "Medieval Europe",
+            "Present Day", "Distant Future"
         ]
         self.current_theme = themes[self.current_level - 1]
+        
         # Here you would load appropriate background and tile images for the theme
-
+		# if theme = "Ancient Egypt":
+        #	tiles = sand
+        # if theme = "Roman Empire":
+        #	tiles = roman
+        # if theme = "Medieval Europe":
+        #	tiles = medieval
+        # if theme = "Present Day":
+        # if theme = "Near Future":
+        #	tiles = near
+        # if theme = "Distant Future":
+        #	tiles = futures
+            
     def set_time_power(self):
         # Unlock new time power every 3 levels
+        # these are junk powers
+        # maybe have invincability, xray, jump, keep time stop
+        # add power to add time to clock
+        # each level has a timer on it.
         powers = [None, "Slow Time", "Rewind", "Time Stop"]
         self.time_power = powers[self.current_level // 3]
 
@@ -231,6 +247,7 @@ class Game:
 
     def draw_boss(self):
         # Draw the boss character
+        # boss_image = 
         pass
 
     def draw_ui(self):
