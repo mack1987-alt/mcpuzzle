@@ -41,22 +41,42 @@ from tile import Tile
 from utils import load_tile_images
 
 class Game:
-    def __init__(self):
-        pygame.init()
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-        self.clock = pygame.time.Clock()
-        self.font = pygame.font.Font(None, 36)
-        self.current_level = 1
-        self.max_levels = 10
-        self.background_x = 0
-        self.player = Player(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
-        self.tile_images = load_tile_images(NUM_TILE_IMAGES, TILE_SIZE)
-        self.tiles = self.create_tiles()
-        self.artifacts = []
-        self.lore_items = []
-        self.time_power = None
-        self.boss_present = False
-        self.initialize_level()
+    
+	def __init__(self):
+    	# Initialize Pygame
+    	pygame.init()
+
+    	# Set up the display
+    	self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+    	# Create a clock object for managing the game's frame rate
+    	self.clock = pygame.time.Clock()
+
+    	# Set up the font for text rendering
+    	self.font = pygame.font.Font(None, 36)
+
+    	# Initialize game state variables
+    	self.current_level = 1
+    	self.max_levels = 10
+    	self.background_x = 0
+
+    	# Create the player object
+    	self.player = Player(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
+
+    	# Load tile images and create the tiles
+    	self.tile_images = load_tile_images(NUM_TILE_IMAGES, TILE_SIZE)
+    	self.tiles = self.create_tiles()
+
+    	# Initialize lists for artifacts and lore items
+    	self.artifacts = []
+    	self.lore_items = []
+
+    	# Initialize time power-up and boss presence variables
+    	self.time_power = None
+    	self.boss_present = False
+
+    	# Initialize the level
+    	self.initialize_level()
 
     def initialize_level(self):
         self.tiles = self.create_tiles()
