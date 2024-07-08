@@ -180,12 +180,16 @@ class Game:
         for tile in self.tiles:
             if tile.rect.collidepoint(pos):
                 self.interact_with_tile(tile)
-
-    def check_tile_interaction(self):
-        for tile in self.tiles:
-            if tile.rect.colliderect(self.player.rect):
-                self.interact_with_tile(tile)
-
+    """
+    def interact_with_tile(self, tile):
+        if self.player.rect.colliderect(tile.rect):
+            if tile.has_artifact:
+                self.collect_artifact(tile)
+            elif tile.has_lore:
+                self.collect_lore(tile)
+            tile.reveal()
+    """
+    
     def interact_with_tile(self, tile):
         if tile.has_artifact:
             self.collect_artifact(tile)
