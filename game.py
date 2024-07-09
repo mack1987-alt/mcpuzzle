@@ -59,6 +59,9 @@ class Game:
         self.pause_options = ["Resume", "Quit to Main Menu"]
         self.pause_selected_option = 0
 
+        # Initialize the timer
+        self.time_remaining = LEVEL_TIME_LIMIT
+
     def run(self):
         while True:
             if self.state == "TITLE":
@@ -67,6 +70,8 @@ class Game:
                 self.show_menu()
             elif self.state == "GAME":
                 self.run_game()
+            elif self.state == "GAME_OVER":
+                self.show_game_over()
             else:
                 break  # Exit the game loop if state is not recognized
 
@@ -79,6 +84,8 @@ class Game:
             self.clock.tick(60)
         if self.state == "GAME":
             self.show_ending()
+        elif self.state == "GAME_OVER":
+            self.show_game_over()
 
     def show_title_screen(self):
         self.screen.fill((0, 0, 0))
@@ -173,6 +180,9 @@ class Game:
         self.check_boss_appearance()
         self.door_open = False  # Reset door state for the new level
 
+        # Reset the timer
+        self.time_remaining = LEVEL_TIME_LIMIT
+
     def create_tiles(self):
         tiles = []
         for x in range(0, LEVEL_WIDTH, TILE_SIZE):
@@ -262,6 +272,11 @@ class Game:
         if self.door_open and self.player.rect.colliderect(self.door.rect):
             self.advance_level()
 
+        # Update the timer
+        self.time_remaining -= 1 / 60  # Assuming 60 FPS
+        if self.time_remaining <= 0:
+            self.state = "GAME_OVER"
+
     def update_boss(self):
         # Implement boss movement and attacks
         pass
@@ -290,6 +305,19 @@ class Game:
         if self.time_power:
             power_text = self.font.render(f"Power: {self.time_power}", True, (255, 255, 255))
             self.screen.blit(power_text, (10, 50))
+        
+        # Display the timer
+        timer_text = self.font.render(f"Time: {int(self.time_remaining)}", True, (255, 255, 255))
+        self.screen.blit(timer_text, (WIDTH - 150, 10))
+
+    def show_game_over(self):
+        self.screen.fill((0, 0, 0))
+        game_over_font = pygame.font.Font(None, 72)
+        game_over_text = game_over_font.render("Game Over", True, (255, 0, 0))
+        self.screen.blit(game_over_text, (WIDTH // 2 - game_over_text.get_width() // 2, HEIGHT // 2 - game_over_text.get_height() // 2))
+        pygame.display.flip()
+        time.sleep(2)  # Display for 2 seconds
+        self.state = "MENU"
 
     def show_ending(self):
         print("Game Over - You've completed the Temporal Labyrinth!")
