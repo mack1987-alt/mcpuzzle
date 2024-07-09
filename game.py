@@ -59,29 +59,35 @@ class Game:
         self.pause_options = ["Resume", "Quit to Main Menu"]
         self.pause_selected_option = 0
 
+    def run(self):
+        while True:
+            if self.state == "TITLE":
+                self.show_title_screen()
+            elif self.state == "MENU":
+                self.show_menu()
+            elif self.state == "GAME":
+                self.run_game()
+            else:
+                break  # Exit the game loop if state is not recognized
+
     def run_game(self):
-        # This method manages the main game loop, handling events, updating game state, and rendering the game world.
-        # It runs until the game ends (either by reaching the max levels or changing state to something other than "GAME").
         while self.current_level <= self.max_levels and self.state == "GAME":
-            self.handle_events()  # Manage user input and system events
-            if not self.paused:  # Only update the game state if not paused
+            self.handle_events()
+            if not self.paused:
                 self.update()
-            self.draw()  # Render the game world
-            self.clock.tick(60)  # Cap the frame rate to 60 FPS for consistent game speed
-    
-        # After the game loop ends, display the game ending screen
+            self.draw()
+            self.clock.tick(60)
         if self.state == "GAME":
             self.show_ending()
 
     def show_title_screen(self):
-        # This method displays the title screen of the game, filling the screen with black and rendering the game title in white.
-        self.screen.fill((0, 0, 0))  # Fill the screen with black
-        title_font = pygame.font.Font(None, 72)  # Create a font for the title text
-        title_text = title_font.render("Temporal Labyrinth", True, (255, 255, 255))  # Render the title text in white
-        self.screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 2 - title_text.get_height() // 2))  # Center the title text on the screen
-        pygame.display.flip()  # Update the display
-        time.sleep(2)  # Pause for 2 seconds to allow the player to see the title screen
-        self.state = "MENU"  # Change the game state to "MENU" after the title screen is shown
+        self.screen.fill((0, 0, 0))
+        title_font = pygame.font.Font(None, 72)
+        title_text = title_font.render("Temporal Labyrinth", True, (255, 255, 255))
+        self.screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 2 - title_text.get_height() // 2))
+        pygame.display.flip()
+        time.sleep(2)  # Display for 2 seconds
+        self.state = "MENU"
 
     def show_menu(self):
         running = True
@@ -118,20 +124,17 @@ class Game:
                             sys.exit()
 
     def show_pause_menu(self):
-        # This method displays a pause menu on the screen, allowing the player to select an option.
-        pause_surface = pygame.Surface((200, 100), pygame.SRCALPHA)  # Create a semi-transparent surface for the pause menu
-        pause_surface.fill((0, 0, 0, 128))  # Fill the surface with a semi-transparent black color
-        option_font = pygame.font.Font(None, 24)  # Create a font for the menu options
-    
-        # Render each option text with a different color based on the selected option
+        pause_surface = pygame.Surface((200, 100), pygame.SRCALPHA)
+        pause_surface.fill((0, 0, 0, 128))
+        option_font = pygame.font.Font(None, 24)
+
         for i, option in enumerate(self.pause_options):
             color = (255, 255, 255) if i == self.pause_selected_option else (128, 128, 128)
             option_text = option_font.render(option, True, color)
             pause_surface.blit(option_text, (100 - option_text.get_width() // 2, 20 + i * 30))
-    
-        # Blit the pause menu surface onto the screen
+
         self.screen.blit(pause_surface, (WIDTH // 2 - 100, HEIGHT // 2 - 50))
-        pygame.display.flip()  # Update the display
+        pygame.display.flip()
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -163,13 +166,12 @@ class Game:
                 self.check_tile_click(event.pos)
 
     def initialize_level(self):
-        # This method initializes a new level in the game.
-        self.tiles = self.create_tiles()  # Create the tile map for the level
-        self.place_artifact()  # Place the artifact item in the level
-        self.place_lore_items()  # Place lore items in the level
-        self.set_time_power()  # Set the time power for the level
-        self.check_boss_appearance()  # Check if a boss should appear in the level
-        self.door_open = False  # Reset the door state to closed for the new level
+        self.tiles = self.create_tiles()
+        self.place_artifact()
+        self.place_lore_items()
+        self.set_time_power()
+        self.check_boss_appearance()
+        self.door_open = False  # Reset door state for the new level
 
     def create_tiles(self):
         tiles = []
