@@ -5,10 +5,10 @@ class Player:
     def __init__(self, x, y, width, height):
         # Load all player images
         self.images = {
-            'left': pygame.transform.scale(pygame.image.load("/home/mcuser/game-test/player-left.png").convert_alpha(), (width, height)),
-            'right': pygame.transform.scale(pygame.image.load("/home/mcuser/game-test/player-right.png").convert_alpha(), (width, height)),
-            'up': pygame.transform.scale(pygame.image.load("/home/mcuser/game-test/player-up.png").convert_alpha(), (width, height)),
-            'down': pygame.transform.scale(pygame.image.load("/home/mcuser/game-test/player-down.png").convert_alpha(), (width, height)),
+            'left': pygame.transform.scale(pygame.image.load("/home/mcuser/game-test/player_resources/player-left.png").convert_alpha(), (width, height)),
+            'right': pygame.transform.scale(pygame.image.load("/home/mcuser/game-test/player_resources/player-right.png").convert_alpha(), (width, height)),
+            'up': pygame.transform.scale(pygame.image.load("/home/mcuser/game-test/player_resources/player-up.png").convert_alpha(), (width, height)),
+            'down': pygame.transform.scale(pygame.image.load("/home/mcuser/game-test/player_resources/player-down.png").convert_alpha(), (width, height)),
         }
         # Set initial image (you can choose any direction to start with)
         self.current_image = self.images['down']

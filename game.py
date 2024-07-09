@@ -1,37 +1,3 @@
-"""
-Tile-Based Puzzle Game
-
-This program implements a simple tile-based puzzle game using Pygame.
-
-Game Description:
-- The game consists of multiple levels, each with a grid of tiles.
-- The player can move around the level using arrow keys.
-- Each level has a hidden key on one of the tiles.
-- The player must find the key by clicking on tiles or moving over them and pressing Enter.
-- When the key is found, the player advances to the next level.
-- The game continues indefinitely, increasing in level number.
-
-Key Features:
-- Randomly generated levels with different tile images
-- Player movement with collision detection
-- Tile interaction through mouse clicks and keyboard input
-- Level progression system
-- Scrolling background to create a sense of movement
-
-Controls:
-- Arrow keys: Move the player
-- Mouse click: Reveal a tile
-- Enter key: Interact with the tile the player is standing on
-
-Dependencies:
-- Python 3.x
-- Pygame library
-
-Author: [mcuser]
-Date: [07-07-2024]
-Version: 1.0
-"""
-
 import pygame
 import sys
 import random
@@ -39,52 +5,56 @@ from constants import *
 from player import Player
 from tile import Tile
 from utils import load_tile_images
+from door import Door  # Make sure to import the Door class
 
 class Game:
-    
-	def __init__(self):
-    	# Initialize Pygame
-    	pygame.init()
+    def __init__(self):
+        # Initialize Pygame
+        pygame.init()
 
-    	# Set up the display
-    	self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        # Set up the display
+        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
-    	# Create a clock object for managing the game's frame rate
-    	self.clock = pygame.time.Clock()
+        # Create a clock object for managing the game's frame rate
+        self.clock = pygame.time.Clock()
 
-    	# Set up the font for text rendering
-    	self.font = pygame.font.Font(None, 36)
+        # Set up the font for text rendering
+        self.font = pygame.font.Font(None, 36)
 
-    	# Initialize game state variables
-    	self.current_level = 1
-    	self.max_levels = 10
-    	self.background_x = 0
+        # Initialize game state variables
+        self.current_level = 1
+        self.max_levels = 10
+        self.background_x = 0
 
-    	# Create the player object
-    	self.player = Player(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
+        # Create the player object
+        self.player = Player(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
 
-    	# Load tile images and create the tiles
-    	self.tile_images = load_tile_images(NUM_TILE_IMAGES, TILE_SIZE)
-    	self.tiles = self.create_tiles()
+        # Load tile images and create the tiles
+        self.tile_images = load_tile_images(NUM_TILE_IMAGES, TILE_SIZE)
+        self.tiles = self.create_tiles()
 
-    	# Initialize lists for artifacts and lore items
-    	self.artifacts = []
-    	self.lore_items = []
+        # Initialize lists for artifacts and lore items
+        self.artifacts = []
+        self.lore_items = []
 
-    	# Initialize time power-up and boss presence variables
-    	self.time_power = None
-    	self.boss_present = False
+        # Initialize time power-up and boss presence variables
+        self.time_power = None
+        self.boss_present = False
 
-    	# Initialize the level
-    	self.initialize_level()
+        # Initialize the door
+        self.door = Door(WIDTH - TILE_SIZE, HEIGHT // 2 - TILE_SIZE // 2, TILE_SIZE, TILE_SIZE)
+        self.door_open = False
+
+        # Initialize the level
+        self.initialize_level()
 
     def initialize_level(self):
         self.tiles = self.create_tiles()
         self.place_artifact()
         self.place_lore_items()
-        self.set_level_theme()
         self.set_time_power()
         self.check_boss_appearance()
+        self.door_open = False  # Reset door state for the new level
 
     def create_tiles(self):
         # Create an empty list to store the tiles
@@ -119,35 +89,8 @@ class Game:
                 lore_tile.has_lore = True
                 visible_tiles.remove(lore_tile)
 
-    def set_level_theme(self):
-        # Set visual theme based on the current level/time period
-        themes = [
-            "Ancient Egypt", "Roman Empire", "Medieval Europe",
-            "Present Day", "Distant Future"
-        ]
-        self.current_theme = themes[self.current_level - 1]
-
-"""        
-    def set_level_theme(self):
-        themes = {
-            "Ancient Egypt": "egypt",
-            "Roman Empire": "roman",
-            "Medieval Europe": "medieval",
-            "Present Day": "present",
-            "Distant Future": "future"
-        }
-        theme_name = themes[self.current_theme]
-        tile_images = load_tile_images(NUM_TILE_IMAGES, TILE_SIZE, theme_name)
-        self.tile_images = tile_images
-        self.tiles = self.create_tiles()
-"""
-           
     def set_time_power(self):
         # Unlock new time power every 3 levels
-        # these are junk powers
-        # maybe have invincability, xray, jump, keep time stop
-        # add power to add time to clock
-        # each level has a timer on it.
         powers = [None, "Slow Time", "Rewind", "Time Stop"]
         self.time_power = powers[self.current_level // 3]
 
@@ -180,16 +123,7 @@ class Game:
         for tile in self.tiles:
             if tile.rect.collidepoint(pos):
                 self.interact_with_tile(tile)
-    """
-    def interact_with_tile(self, tile):
-        if self.player.rect.colliderect(tile.rect):
-            if tile.has_artifact:
-                self.collect_artifact(tile)
-            elif tile.has_lore:
-                self.collect_lore(tile)
-            tile.reveal()
-    """
-    
+
     def interact_with_tile(self, tile):
         if tile.has_artifact:
             self.collect_artifact(tile)
@@ -198,15 +132,20 @@ class Game:
         tile.reveal()
 
     def collect_artifact(self, tile):
-        print(f"Collected artifact from {self.current_theme}")
-        self.artifacts.append(f"Artifact from {self.current_theme}")
+        print(f"Collected artifact from Level {self.current_level}")
+        self.artifacts.append(f"Artifact from Level {self.current_level}")
         tile.has_artifact = False
-        self.advance_level()
+        self.check_all_items_collected()
 
     def collect_lore(self, tile):
-        print(f"Collected lore item from {self.current_theme}")
-        self.lore_items.append(f"Lore from {self.current_theme}")
+        print(f"Collected lore item from Level {self.current_level}")
+        self.lore_items.append(f"Lore from Level {self.current_level}")
         tile.has_lore = False
+        self.check_all_items_collected()
+
+    def check_all_items_collected(self):
+        if all(not tile.has_artifact and not tile.has_lore for tile in self.tiles):
+            self.door_open = True
 
     def use_time_power(self):
         if self.time_power:
@@ -217,6 +156,7 @@ class Game:
         if self.current_level < self.max_levels:
             self.current_level += 1
             self.initialize_level()
+            self.player.rect.topleft = (0, HEIGHT // 2 - PLAYER_SIZE // 2)  # Reset player position
         else:
             self.show_ending()
 
@@ -236,6 +176,8 @@ class Game:
         self.scroll_background()
         if self.boss_present:
             self.update_boss()
+        if self.door_open and self.player.rect.colliderect(self.door.rect):
+            self.advance_level()
 
     def update_boss(self):
         # Implement boss movement and attacks
@@ -248,16 +190,17 @@ class Game:
         self.player.draw(self.screen)
         if self.boss_present:
             self.draw_boss()
+        if self.door_open:
+            self.door.draw(self.screen)
         self.draw_ui()
         pygame.display.flip()
 
     def draw_boss(self):
         # Draw the boss character
-        # boss_image = 
         pass
 
     def draw_ui(self):
-        text = self.font.render(f"Level: {self.current_level} - {self.current_theme}", True, (255, 255, 255))
+        text = self.font.render(f"Level: {self.current_level}", True, (255, 255, 255))
         self.screen.blit(text, (10, 10))
         if self.time_power:
             power_text = self.font.render(f"Power: {self.time_power}", True, (255, 255, 255))
@@ -269,3 +212,4 @@ class Game:
         print(f"Lore Items Found: {len(self.lore_items)}")
         pygame.quit()
         sys.exit()
+
