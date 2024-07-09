@@ -1,11 +1,12 @@
 import pygame
 import sys
 import random
+import time
 from constants import *
 from player import Player
 from tile import Tile
 from utils import load_tile_images
-from door import Door  # Make sure to import the Door class
+from door import Door
 
 class Game:
     def __init__(self):
@@ -48,6 +49,122 @@ class Game:
         # Initialize the level
         self.initialize_level()
 
+        # Add state variables
+        self.state = "TITLE"
+        self.menu_options = ["Play", "Quit"]
+        self.selected_option = 0
+
+        # New pause menu variables
+        self.paused = False
+        self.pause_options = ["Resume", "Quit to Main Menu"]
+        self.pause_selected_option = 0
+
+    def run(self):
+        while True:
+            if self.state == "TITLE":
+                self.show_title_screen()
+            elif self.state == "MENU":
+                self.show_menu()
+            elif self.state == "GAME":
+                self.run_game()
+            else:
+                break  # Exit the game loop if state is not recognized
+
+    def run_game(self):
+        while self.current_level <= self.max_levels and self.state == "GAME":
+            self.handle_events()
+            if not self.paused:
+                self.update()
+            self.draw()
+            self.clock.tick(60)
+        if self.state == "GAME":
+            self.show_ending()
+
+    def show_title_screen(self):
+        self.screen.fill((0, 0, 0))
+        title_font = pygame.font.Font(None, 72)
+        title_text = title_font.render("Temporal Labyrinth", True, (255, 255, 255))
+        self.screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 2 - title_text.get_height() // 2))
+        pygame.display.flip()
+        time.sleep(2)  # Display for 2 seconds
+        self.state = "MENU"
+
+    def show_menu(self):
+        running = True
+        while running:
+            self.screen.fill((0, 0, 0))
+            title_font = pygame.font.Font(None, 72)
+            option_font = pygame.font.Font(None, 36)
+
+            title_text = title_font.render("Temporal Labyrinth", True, (255, 255, 255))
+            self.screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, 100))
+
+            for i, option in enumerate(self.menu_options):
+                color = (255, 255, 255) if i == self.selected_option else (128, 128, 128)
+                option_text = option_font.render(option, True, color)
+                self.screen.blit(option_text, (WIDTH // 2 - option_text.get_width() // 2, 300 + i * 50))
+
+            pygame.display.flip()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP:
+                        self.selected_option = (self.selected_option - 1) % len(self.menu_options)
+                    elif event.key == pygame.K_DOWN:
+                        self.selected_option = (self.selected_option + 1) % len(self.menu_options)
+                    elif event.key == pygame.K_RETURN:
+                        if self.selected_option == 0:  # Play
+                            self.state = "GAME"
+                            running = False
+                        elif self.selected_option == 1:  # Quit
+                            pygame.quit()
+                            sys.exit()
+
+    def show_pause_menu(self):
+        pause_surface = pygame.Surface((200, 100), pygame.SRCALPHA)
+        pause_surface.fill((0, 0, 0, 128))
+        option_font = pygame.font.Font(None, 24)
+
+        for i, option in enumerate(self.pause_options):
+            color = (255, 255, 255) if i == self.pause_selected_option else (128, 128, 128)
+            option_text = option_font.render(option, True, color)
+            pause_surface.blit(option_text, (100 - option_text.get_width() // 2, 20 + i * 30))
+
+        self.screen.blit(pause_surface, (WIDTH // 2 - 100, HEIGHT // 2 - 50))
+        pygame.display.flip()
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.paused = not self.paused
+                    self.pause_selected_option = 0
+                elif self.paused:
+                    if event.key == pygame.K_UP:
+                        self.pause_selected_option = (self.pause_selected_option - 1) % len(self.pause_options)
+                    elif event.key == pygame.K_DOWN:
+                        self.pause_selected_option = (self.pause_selected_option + 1) % len(self.pause_options)
+                    elif event.key == pygame.K_RETURN:
+                        if self.pause_selected_option == 0:  # Resume
+                            self.paused = False
+                        elif self.pause_selected_option == 1:  # Quit to Main Menu
+                            self.state = "TITLE"
+                            self.paused = False
+                            return  # Exit the game loop and return to the main loop
+                else:
+                    if event.key == pygame.K_RETURN:
+                        self.check_tile_interaction()
+                    elif event.key == pygame.K_SPACE:
+                        self.use_time_power()
+            elif event.type == pygame.MOUSEBUTTONDOWN and not self.paused:
+                self.check_tile_click(event.pos)
+
     def initialize_level(self):
         self.tiles = self.create_tiles()
         self.place_artifact()
@@ -57,20 +174,11 @@ class Game:
         self.door_open = False  # Reset door state for the new level
 
     def create_tiles(self):
-        # Create an empty list to store the tiles
         tiles = []
-
-        # Loop through the level width
         for x in range(0, LEVEL_WIDTH, TILE_SIZE):
-            # Loop through the screen height
             for y in range(0, HEIGHT, TILE_SIZE):
-                # Choose a random tile image
                 image = random.choice(self.tile_images)
-
-                # Create a new tile with the specified position, size, and image
                 tiles.append(Tile(x, y, TILE_SIZE, TILE_SIZE, image))
-
-        # Return the list of tiles
         return tiles
 
     def place_artifact(self):
@@ -80,7 +188,6 @@ class Game:
         self.artifacts.append(f"Artifact from Level {self.current_level}")
 
     def place_lore_items(self):
-        # Place 1-3 lore items randomly on the level
         num_lore_items = random.randint(1, 3)
         visible_tiles = [tile for tile in self.tiles if tile.rect.x < WIDTH and not tile.has_artifact]
         for _ in range(num_lore_items):
@@ -90,34 +197,11 @@ class Game:
                 visible_tiles.remove(lore_tile)
 
     def set_time_power(self):
-        # Unlock new time power every 3 levels
         powers = [None, "Slow Time", "Rewind", "Time Stop"]
         self.time_power = powers[self.current_level // 3]
 
     def check_boss_appearance(self):
-        # Boss appears on levels 5 and 10
         self.boss_present = self.current_level in [5, 10]
-
-    def run(self):
-        while self.current_level <= self.max_levels:
-            self.handle_events()
-            self.update()
-            self.draw()
-            self.clock.tick(60)
-        self.show_ending()
-
-    def handle_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                self.check_tile_click(event.pos)
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    self.check_tile_interaction()
-                elif event.key == pygame.K_SPACE:
-                    self.use_time_power()
 
     def check_tile_click(self, pos):
         for tile in self.tiles:
@@ -161,7 +245,6 @@ class Game:
             self.show_ending()
 
     def scroll_background(self):
-        # Scroll the background to create a sense of movement
         self.background_x -= SCROLL_SPEED
         if self.background_x < -LEVEL_WIDTH:
             self.background_x = 0
@@ -193,6 +276,8 @@ class Game:
         if self.door_open:
             self.door.draw(self.screen)
         self.draw_ui()
+        if self.paused:
+            self.show_pause_menu()
         pygame.display.flip()
 
     def draw_boss(self):
@@ -212,4 +297,3 @@ class Game:
         print(f"Lore Items Found: {len(self.lore_items)}")
         pygame.quit()
         sys.exit()
-
