@@ -11,60 +11,63 @@ from enemy import Enemy
 
 class Game:
     def __init__(self):
-        # Initialize Pygame
+        print("Initializing py...")
         pygame.init()
-
-        # Set up the display
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-
-        # Create a clock object for managing the game's frame rate
+        print("Creating time...")
         self.clock = pygame.time.Clock()
+        #input("Press Enter to continue...")
 
-        # Set up the font for text rendering
+        print("Setting up display...")
+        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        print("Setting font...")
         self.font = pygame.font.Font(None, 36)
-
-        # Initialize game state variables
-        self.current_level = 1
-        self.max_levels = 10
-        self.background_x = 0
-
-        # Create the player object
-        self.player = Player(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
-
-        # Create the enemy object
-        self.enemies = []
-        self.num_enemies = 3
-        # Load tile images and create the tiles
-        self.tile_images = load_tile_images(NUM_TILE_IMAGES, TILE_SIZE)
-        self.tiles = self.create_tiles()
-
-        # Initialize lists for artifacts and lore items
-        self.artifacts = []
-        self.lore_items = []
-
-        # Initialize time power-up and boss presence variables
-        self.time_power = None
-        self.boss_present = False
-
-        # Initialize the door
-        self.door = Door(WIDTH - TILE_SIZE, HEIGHT // 2 - TILE_SIZE // 2, TILE_SIZE, TILE_SIZE)
-        self.door_open = False
-
-        # Initialize the level
-        self.initialize_level()
-
-        # Add state variables
-        self.state = "TITLE"
-        self.menu_options = ["Play", "Quit"]
-        self.selected_option = 0
-
-        # New pause menu variables
+        print("Initializing backgroud...")
+        self.menu_background = pygame.image.load("menu_background.png")
+        print("Initializing pause menu variables")
         self.paused = False
         self.pause_options = ["Resume", "Quit to Main Menu"]
         self.pause_selected_option = 0
+        #input("Press Enter to continue...")
 
-        # Initialize the timer
+        
+        print("Loading tile images...")
+        self.tile_images = load_tile_images(NUM_TILE_IMAGES, TILE_SIZE)
+        print("Creating tile images...")
+        self.tiles = self.create_tiles()
+        print("Initialize the door...")
+        self.door = Door(WIDTH - TILE_SIZE, HEIGHT // 2 - TILE_SIZE // 2, TILE_SIZE, TILE_SIZE)
+        self.door_open = False
+        print("Initialize timer...")
         self.time_remaining = LEVEL_TIME_LIMIT
+        #input("Press Enter to continue...")
+
+        print("Initializing game state var...")
+        self.current_level = 1
+        self.max_levels = 10
+        self.background_x = 0
+        self.state = "TITLE"
+        self.menu_options = ["Play", "Quit"]
+        self.selected_option = 0
+        #input("Press Enter to continue...")
+
+        print("Creating player object...")
+        self.player = Player(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
+        
+        print("Creating enemy object...")
+        self.enemies = []
+        self.num_enemies = 3
+        
+        print("Initializing items...")
+        self.artifacts = []
+        self.lore_items = []
+        print("Initialize time power-up...")
+        self.time_power = None
+        print("Initialize boss state...")
+        self.boss_present = False
+        input("Press Enter to continue...")
+
+        print("Initialize the level...")
+        self.initialize_level()
 
     def run(self):
         while True:
@@ -104,6 +107,8 @@ class Game:
         running = True
         while running:
             self.screen.fill((0, 0, 0))
+            self.screen.blit(self.menu_background, (0, 0))
+
             title_font = pygame.font.Font(None, 72)
             option_font = pygame.font.Font(None, 36)
 
