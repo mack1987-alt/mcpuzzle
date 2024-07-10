@@ -7,6 +7,7 @@ from player import Player
 from tile import Tile
 from utils import load_tile_images
 from door import Door
+from enemy import Enemy
 
 class Game:
     def __init__(self):
@@ -30,6 +31,9 @@ class Game:
         # Create the player object
         self.player = Player(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
 
+        # Create the enemy object
+        self.enemies = []
+        self.num_enemies = 3
         # Load tile images and create the tiles
         self.tile_images = load_tile_images(NUM_TILE_IMAGES, TILE_SIZE)
         self.tiles = self.create_tiles()
@@ -172,6 +176,14 @@ class Game:
             elif event.type == pygame.MOUSEBUTTONDOWN and not self.paused:
                 self.check_tile_click(event.pos)
 
+    def place_enemies(self):
+        self.enemies = []
+        for _ in range(self.num_enemies):
+            x = random.randint(0, WIDTH - ENEMY_SIZE)
+            y = random.randint(0, HEIGHT - ENEMY_SIZE)
+            enemy = Enemy(x, y, ENEMY_SIZE, ENEMY_SIZE)
+            self.enemies.append(enemy)
+
     def initialize_level(self):
         self.tiles = self.create_tiles()
         self.place_artifact()
@@ -179,9 +191,9 @@ class Game:
         self.set_time_power()
         self.check_boss_appearance()
         self.door_open = False  # Reset door state for the new level
-
         # Reset the timer
         self.time_remaining = LEVEL_TIME_LIMIT
+        self.place_enemies()
 
     def create_tiles(self):
         tiles = []
@@ -262,7 +274,15 @@ class Game:
             self.background_x = 0
         elif self.background_x < -LEVEL_WIDTH + WIDTH:
             self.background_x = -LEVEL_WIDTH + WIDTH
-            
+
+    def handle_enemy_collision(self):
+        # Implement what happens when the player collides with an enemy
+        # For example, lose health, restart level, etc.
+        print("Player collided with an enemy!")
+        # For now, let's just move the player back to the start
+        self.player.rect.topleft = (0, HEIGHT // 2 - PLAYER_SIZE // 2)
+
+
     def update(self):
         keys = pygame.key.get_pressed()
         self.player.move(keys)
@@ -271,6 +291,10 @@ class Game:
             self.update_boss()
         if self.door_open and self.player.rect.colliderect(self.door.rect):
             self.advance_level()
+        for enemy in self.enemies:
+            enemy.move()
+            if self.player.rect.colliderect(enemy.rect):
+                self.handle_enemy_collision()
 
         # Update the timer
         self.time_remaining -= 1 / 60  # Assuming 60 FPS
@@ -293,6 +317,9 @@ class Game:
         self.draw_ui()
         if self.paused:
             self.show_pause_menu()
+        for enemy in self.enemies:
+            enemy.draw(self.screen)
+          
         pygame.display.flip()
 
     def draw_boss(self):

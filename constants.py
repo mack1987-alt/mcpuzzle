@@ -6,3 +6,4 @@ LEVEL_WIDTH = WIDTH * 2
 TILE_SIZE = 100
 NUM_TILE_IMAGES = 5
 LEVEL_TIME_LIMIT = 60
+ENEMY_SIZE = 20  # or whatever size you prefer
