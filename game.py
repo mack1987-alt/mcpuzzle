@@ -1,3 +1,4 @@
+import os
 import pygame
 import sys
 import random
@@ -15,7 +16,6 @@ class Game:
         pygame.init()
         print("Creating time...")
         self.clock = pygame.time.Clock()
-        #input("Press Enter to continue...")
 
         print("Setting up display...")
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -27,9 +27,7 @@ class Game:
         self.paused = False
         self.pause_options = ["Resume", "Quit to Main Menu"]
         self.pause_selected_option = 0
-        #input("Press Enter to continue...")
 
-        
         print("Loading tile images...")
         self.tile_images = load_tile_images(NUM_TILE_IMAGES, TILE_SIZE)
         print("Creating tile images...")
@@ -39,16 +37,15 @@ class Game:
         self.door_open = False
         print("Initialize timer...")
         self.time_remaining = LEVEL_TIME_LIMIT
-        #input("Press Enter to continue...")
 
-        print("Initializing game state var...")
+        print("Initializing vars ...")
         self.current_level = 1
         self.max_levels = 10
         self.background_x = 0
         self.state = "TITLE"
+        print("Game state: TITLE")
         self.menu_options = ["Play", "Quit"]
         self.selected_option = 0
-        #input("Press Enter to continue...")
 
         print("Creating player object...")
         self.player = Player(WIDTH / 2, HEIGHT / 2, PLAYER_SIZE, PLAYER_SIZE)
@@ -61,26 +58,46 @@ class Game:
         self.artifacts = []
         self.lore_items = []
         print("Initialize time power-up...")
-        self.time_power = None
+        self.time_power = None # not using this...
         print("Initialize boss state...")
-        self.boss_present = False
-        input("Press Enter to continue...")
+        self.boss_present = False # probably don't need this.
 
         print("Initialize the level...")
-        self.initialize_level()
+        self.initialize_level() # run this after everything else
+        #input("Press Enter to continue...")
+
+        print("Complete.")
+        time.sleep(1)
+        os.system('clear')
+
 
     def run(self):
         while True:
             if self.state == "TITLE":
+                print("Loading title...")
+                time.sleep(1)
+                os.system('clear')
                 self.show_title_screen()
             elif self.state == "MENU":
+                print("Loading menu...")
+                time.sleep(1)
+                os.system('clear')
                 self.show_menu()
             elif self.state == "GAME":
+                print("Loading game...")
+                time.sleep(1)
+                os.system('clear')
                 self.run_game()
             elif self.state == "GAME_OVER":
+                print("Player lost...")
+                time.sleep(1)
+                os.system('clear')
                 self.show_game_over()
             else:
-                break  # Exit the game loop if state is not recognized
+                print("Error: game state not recognized")
+                time.sleep(1)
+                os.system('clear')
+                break  
 
     def run_game(self):
         while self.current_level <= self.max_levels and self.state == "GAME":
@@ -135,7 +152,10 @@ class Game:
                         if self.selected_option == 0:  # Play
                             self.state = "GAME"
                             running = False
-                        elif self.selected_option == 1:  # Quit
+                        elif self.selected_option == 1:
+                            print("Quiting...")
+                            time.sleep(1)
+                            os.system('clear')
                             pygame.quit()
                             sys.exit()
 
@@ -159,6 +179,7 @@ class Game:
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
+                    print("Paused.")
                     self.paused = not self.paused
                     self.pause_selected_option = 0
                 elif self.paused:
@@ -167,12 +188,16 @@ class Game:
                     elif event.key == pygame.K_DOWN:
                         self.pause_selected_option = (self.pause_selected_option + 1) % len(self.pause_options)
                     elif event.key == pygame.K_RETURN:
-                        if self.pause_selected_option == 0:  # Resume
+                        if self.pause_selected_option == 0:
                             self.paused = False
-                        elif self.pause_selected_option == 1:  # Quit to Main Menu
+                            os.system('clear') # clears pause msg
+                        elif self.pause_selected_option == 1:
                             self.state = "TITLE"
                             self.paused = False
-                            return  # Exit the game loop and return to the main loop
+                            print("Quiting...")
+                            time.sleep(1)
+                            os.system('clear')
+                            return
                 else:
                     if event.key == pygame.K_RETURN:
                         self.check_tile_interaction()
