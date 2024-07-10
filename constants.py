@@ -1,4 +1,6 @@
 WIDTH, HEIGHT = 800, 600
+UI_HEIGHT = 100  # Height for the UI section
+TOTAL_HEIGHT = HEIGHT + UI_HEIGHT  # Total height including the UI section
 PLAYER_SIZE = 50
 PLAYER_SPEED = 5
 SCROLL_SPEED = 2

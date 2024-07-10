@@ -1,3 +1,4 @@
+# game.py
 import os
 import pygame
 import sys
@@ -9,6 +10,7 @@ from tile import Tile
 from utils import load_tile_images
 from door import Door
 from enemy import Enemy
+from ui import UI
 
 class Game:
     def __init__(self):
@@ -18,9 +20,10 @@ class Game:
         self.clock = pygame.time.Clock()
 
         print("Setting up display...")
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        self.screen = pygame.display.set_mode((WIDTH, TOTAL_HEIGHT))
         print("Setting font...")
         self.font = pygame.font.Font(None, 36)
+        self.ui = UI(self.font)
         print("Initializing backgroud...")
         self.menu_background = pygame.image.load("menu_background.png")
         print("Initializing pause menu variables")
@@ -70,6 +73,8 @@ class Game:
         time.sleep(1)
         os.system('clear')
 
+        # Initialize cooldown timer
+        self.enemy_collision_cooldown = 0
 
     def run(self):
         while True:
@@ -151,6 +156,7 @@ class Game:
                     elif event.key == pygame.K_RETURN:
                         if self.selected_option == 0:  # Play
                             self.state = "GAME"
+                            self.reset_game_state()  # Reset game state for new game
                             running = False
                         elif self.selected_option == 1:
                             print("Quiting...")
@@ -237,7 +243,6 @@ class Game:
         visible_tiles = [tile for tile in self.tiles if tile.rect.x < WIDTH]
         artifact_tile = random.choice(visible_tiles)
         artifact_tile.has_artifact = True
-        self.artifacts.append(f"Artifact from Level {self.current_level}")
 
     def place_lore_items(self):
         num_lore_items = random.randint(1, 3)
@@ -292,7 +297,7 @@ class Game:
         if self.current_level < self.max_levels:
             self.current_level += 1
             self.initialize_level()
-            self.player.rect.topleft = (0, HEIGHT // 2 - PLAYER_SIZE // 2)  # Reset player position
+            self.reset_player_position()  # Reset player position only
         else:
             self.show_ending()
 
@@ -308,10 +313,12 @@ class Game:
     def handle_enemy_collision(self):
         # Implement what happens when the player collides with an enemy
         # For example, lose health, restart level, etc.
-        print("Player collided with an enemy!")
-        # For now, let's just move the player back to the start
-        self.player.rect.topleft = (0, HEIGHT // 2 - PLAYER_SIZE // 2)
-
+        if self.enemy_collision_cooldown == 0:
+            print("Player collided with an enemy!")
+            self.player.health -= 10  # Decrease player health by 10
+            self.enemy_collision_cooldown = 60  # Cooldown period (e.g., 1 second at 60 FPS)
+            if self.player.health <= 0:
+                self.state = "GAME_OVER"
 
     def update(self):
         keys = pygame.key.get_pressed()
@@ -325,6 +332,10 @@ class Game:
             enemy.move()
             if self.player.rect.colliderect(enemy.rect):
                 self.handle_enemy_collision()
+
+        # Update the cooldown timer
+        if self.enemy_collision_cooldown > 0:
+            self.enemy_collision_cooldown -= 1
 
         # Update the timer
         self.time_remaining -= 1 / 60  # Assuming 60 FPS
@@ -357,15 +368,8 @@ class Game:
         pass
 
     def draw_ui(self):
-        text = self.font.render(f"Level: {self.current_level}", True, (255, 255, 255))
-        self.screen.blit(text, (10, 10))
-        if self.time_power:
-            power_text = self.font.render(f"Power: {self.time_power}", True, (255, 255, 255))
-            self.screen.blit(power_text, (10, 50))
-        
-        # Display the timer
-        timer_text = self.font.render(f"Time: {int(self.time_remaining)}", True, (255, 255, 255))
-        self.screen.blit(timer_text, (WIDTH - 150, 10))
+        tiles_left = sum(1 for tile in self.tiles if tile.has_artifact or tile.has_lore)
+        self.ui.draw(self.screen, self.current_level, self.player.health, self.time_remaining, tiles_left, self.artifacts, self.lore_items, self.time_power)
 
     def show_game_over(self):
         self.screen.fill((0, 0, 0))
@@ -382,3 +386,15 @@ class Game:
         print(f"Lore Items Found: {len(self.lore_items)}")
         pygame.quit()
         sys.exit()
+
+    def reset_player_position(self):
+        self.player.rect.topleft = (0, HEIGHT // 2 - PLAYER_SIZE // 2)  # Reset player position
+
+    def reset_game_state(self):
+        self.reset_player_position()
+        self.player.reset_health()  # Reset player health
+        self.artifacts = []  # Reset artifacts
+        self.lore_items = []  # Reset lore items
+        self.time_power = None  # Reset time power
+        self.current_level = 1  # Reset level
+        self.initialize_level()  # Initialize the first level

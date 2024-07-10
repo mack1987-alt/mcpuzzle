@@ -1,3 +1,4 @@
+# player.py
 import pygame
 from constants import WIDTH, HEIGHT, PLAYER_SPEED
 
@@ -15,6 +16,9 @@ class Player:
         self.rect = self.current_image.get_rect()
         self.rect.x = x
         self.rect.y = y
+
+        # Initialize health
+        self.health = 100
 
     def move(self, keys):
         moved = False
@@ -43,3 +47,6 @@ class Player:
 
     def draw(self, screen):
         screen.blit(self.current_image, self.rect)
+
+    def reset_health(self):
+        self.health = 100
